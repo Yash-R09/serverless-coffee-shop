@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 
 function App() {
+
+  const API_URL = "https://awbl49tym7.execute-api.ap-south-1.amazonaws.com/dev/coffee";
+
   const [coffee, setCoffee] = useState([]);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
 
-  const API_URL = "https://awbl49tym7.execute-api.ap-south-1.amazonaws.com/dev/coffee";
-
-  // Fetch coffee list
   const fetchCoffee = () => {
     fetch(API_URL)
       .then(res => res.json())
@@ -21,7 +21,7 @@ function App() {
     fetchCoffee();
   }, []);
 
-  // Add coffee
+  // ADD coffee
   const addCoffee = async () => {
 
     const newCoffee = {
@@ -31,65 +31,113 @@ function App() {
       stock: Number(stock)
     };
 
-    try {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(newCoffee)
-      });
+    await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(newCoffee)
+    });
 
-      // refresh list
-      fetchCoffee();
+    fetchCoffee();
 
-      // clear form
-      setName("");
-      setPrice("");
-      setStock("");
+    setName("");
+    setPrice("");
+    setStock("");
+  };
 
-    } catch (err) {
-      console.error(err);
-    }
+  // DELETE coffee
+  const deleteCoffee = async (coffeeId) => {
+
+    await fetch(API_URL, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ coffeeId })
+    });
+
+    fetchCoffee();
+  };
+
+  // UPDATE stock
+  const updateStock = async (coffeeId, newStock) => {
+
+    await fetch(API_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        coffeeId: coffeeId,
+        stock: newStock
+      })
+    });
+
+    fetchCoffee();
   };
 
   return (
     <div style={{ padding: "40px", fontFamily: "Arial" }}>
+
       <h1>☕ Serverless Coffee Shop</h1>
 
       <h2>Add Coffee</h2>
 
-      <input
-        placeholder="Name"
-        value={name}
-        onChange={e => setName(e.target.value)}
-      />
+      <div style={{ marginBottom: "30px" }}>
 
-      <input
-        placeholder="Price"
-        type="number"
-        value={price}
-        onChange={e => setPrice(e.target.value)}
-      />
+        <input
+          placeholder="Coffee Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-      <input
-        placeholder="Stock"
-        type="number"
-        value={stock}
-        onChange={e => setStock(e.target.value)}
-      />
+        <input
+          type="number"
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
 
-      <button onClick={addCoffee}>Add Coffee</button>
+        <input
+          type="number"
+          placeholder="Stock"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+        />
+
+        <button onClick={addCoffee}>Add</button>
+
+      </div>
 
       <hr />
 
+      <h2>Coffee Inventory</h2>
+
       {coffee.map(item => (
-        <div key={item.coffeeId} style={{ marginBottom: "20px" }}>
-          <h2>{item.name}</h2>
+        <div key={item.coffeeId} style={{ marginBottom: "25px" }}>
+
+          <h3>{item.name}</h3>
+
           <p>Price: ${item.price}</p>
+
           <p>Stock: {item.stock}</p>
+
+          <button onClick={() => updateStock(item.coffeeId, item.stock + 1)}>
+            +
+          </button>
+
+          <button onClick={() => updateStock(item.coffeeId, item.stock - 1)}>
+            -
+          </button>
+
+          <button onClick={() => deleteCoffee(item.coffeeId)}>
+            Delete
+          </button>
+
         </div>
       ))}
+
     </div>
   );
 }
