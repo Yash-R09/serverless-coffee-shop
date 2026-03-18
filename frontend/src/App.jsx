@@ -16,7 +16,6 @@ function App() {
   const [message, setMessage] = useState("");
 
   const [editingId, setEditingId] = useState(null);
-  const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
 
   // Fetch
@@ -25,8 +24,16 @@ function App() {
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
-      setCoffee(data);
-      setFilteredCoffee(data);
+
+      const safeData = data.map(item => ({
+        coffeeId: item.coffeeId,
+        name: item.name || "",
+        price: item.price || 0,
+        stock: item.stock || 0
+      }));
+
+      setCoffee(safeData);
+      setFilteredCoffee(safeData);
     } catch {
       showMessage("Error fetching data");
     }
@@ -42,7 +49,7 @@ function App() {
     let updated = [...coffee];
 
     updated = updated.filter(item =>
-      item.name.toLowerCase().includes(search.toLowerCase())
+      (item.name || "").toLowerCase().includes(search.toLowerCase())
     );
 
     if (sortBy === "price") updated.sort((a, b) => a.price - b.price);
@@ -68,69 +75,87 @@ function App() {
       stock: Number(stock)
     };
 
-    await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newCoffee)
-    });
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCoffee)
+      });
 
-    showMessage("Added ✅");
-    fetchCoffee();
+      showMessage("Added ✅");
+      fetchCoffee();
 
-    setName("");
-    setPrice("");
-    setStock("");
+      setName("");
+      setPrice("");
+      setStock("");
+    } catch {
+      showMessage("Error adding item");
+    }
   };
 
   // Delete
   const deleteCoffee = async (coffeeId) => {
     if (!window.confirm("Delete this coffee?")) return;
 
-    await fetch(API_URL, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coffeeId })
-    });
+    try {
+      await fetch(API_URL, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coffeeId })
+      });
 
-    showMessage("Deleted ❌");
-    fetchCoffee();
+      showMessage("Deleted ❌");
+      fetchCoffee();
+    } catch {
+      showMessage("Error deleting");
+    }
   };
 
   // Update stock
   const updateStock = async (coffeeId, newStock) => {
     if (newStock < 0) return;
 
-    await fetch(API_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coffeeId, stock: newStock })
-    });
+    try {
+      await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coffeeId,
+          stock: newStock
+        })
+      });
 
-    showMessage("Stock Updated 🔄");
-    fetchCoffee();
+      showMessage("Stock Updated 🔄");
+      fetchCoffee();
+    } catch {
+      showMessage("Error updating stock");
+    }
   };
 
-  // Edit
+  // Start edit (ONLY PRICE)
   const startEdit = (item) => {
     setEditingId(item.coffeeId);
-    setEditName(item.name);
     setEditPrice(item.price);
   };
 
+  // Save edit (ONLY PRICE)
   const saveEdit = async (coffeeId) => {
-    await fetch(API_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        coffeeId,
-        name: editName,
-        price: Number(editPrice)
-      })
-    });
+    try {
+      await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coffeeId,
+          price: Number(editPrice)
+        })
+      });
 
-    setEditingId(null);
-    showMessage("Updated ✏️");
-    fetchCoffee();
+      setEditingId(null);
+      showMessage("Price Updated 💰");
+      fetchCoffee();
+    } catch {
+      showMessage("Error updating");
+    }
   };
 
   const totalItems = coffee.length;
@@ -140,17 +165,14 @@ function App() {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6">
 
-        {/* Header */}
         <h1 className="text-3xl font-bold mb-6">☕ Coffee Inventory</h1>
 
-        {/* Toast */}
         {message && (
           <div className="bg-black text-white p-2 rounded mb-4 text-center">
             {message}
           </div>
         )}
 
-        {/* Summary */}
         <div className="flex justify-between mb-6 bg-gray-100 p-4 rounded-xl">
           <div><b>Total Items:</b> {totalItems}</div>
           <div><b>Total Stock:</b> {totalStock}</div>
@@ -189,13 +211,29 @@ function App() {
 
               {editingId === item.coffeeId ? (
                 <div className="flex gap-2 mb-2">
-                  <input className="border p-1 rounded" value={editName} onChange={e => setEditName(e.target.value)} />
-                  <input className="border p-1 rounded" value={editPrice} onChange={e => setEditPrice(e.target.value)} />
-                  <button className="bg-blue-500 text-white px-2 rounded" onClick={() => saveEdit(item.coffeeId)}>Save</button>
+                  {/* NAME READ ONLY */}
+                  <p className="font-semibold">{item.name || "Unnamed Coffee"}</p>
+
+                  {/* EDIT ONLY PRICE */}
+                  <input
+                    className="border p-1 rounded"
+                    type="number"
+                    value={editPrice}
+                    onChange={e => setEditPrice(e.target.value)}
+                  />
+
+                  <button
+                    className="bg-blue-500 text-white px-2 rounded"
+                    onClick={() => saveEdit(item.coffeeId)}
+                  >
+                    Save
+                  </button>
                 </div>
               ) : (
                 <>
-                  <h3 className="text-lg font-semibold">{item.name}</h3>
+                  <h3 className="text-lg font-semibold">
+                    {item.name || "Unnamed Coffee"}
+                  </h3>
                   <p>Price: ₹{item.price}</p>
                 </>
               )}
