@@ -86,5 +86,7 @@ npm run dev
 • Improved analytics with AWS QuickSight
 • CI/CD for automated deployments
 
+---
+
 ## Author
 Yash - www.linkedin.com/in/yash-rasal-660703387
