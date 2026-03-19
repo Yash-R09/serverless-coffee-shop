@@ -1,4 +1,4 @@
-# ☕ Serverless Coffee Inventory App
+# ☕ Serverless CoffeeShop Manager
 
 A **serverless coffee inventory management web application** built with **React (Vite)**, **AWS Lambda**, **API Gateway**, **DynamoDB**, and **AWS Amplify**.  
 Designed to streamline inventory tracking for small businesses with **real-time CRUD operations, analytics, and cloud deployment**.
@@ -51,7 +51,7 @@ Amplify  →  API Gateway → Lambda Functions → DynamoDB
 
 ## Demo
 
-**Live App:** [https://main.d2gxmbwi92c52j.amplifyapp.com/]  
+**Live App:** https://main.d2gxmbwi92c52j.amplifyapp.com/  
 
 **Screenshots / GIFs:**  
 1. Add & Edit Coffee Item  
@@ -87,4 +87,4 @@ npm run dev
 • CI/CD for automated deployments
 
 ## Author
-Yash - [www.linkedin.com/in/yash-rasal-660703387]
+Yash - www.linkedin.com/in/yash-rasal-660703387
